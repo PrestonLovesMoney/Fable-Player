@@ -1,7 +1,7 @@
 {
-  "name": "spiceplayer",
+  "name": "fableplayer",
   "version": "1.0.0",
-  "description": "An Electron application with React and TypeScript",
+  "description": "Fable Player — your music story begins here",
   "main": "./out/main/index.js",
   "author": "example.com",
   "homepage": "https://electron-vite.org",
@@ -23,6 +23,7 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
+    "@xhayper/discord-rpc": "^1.3.4",
     "hls.js": "^1.6.16"
   },
   "devDependencies": {

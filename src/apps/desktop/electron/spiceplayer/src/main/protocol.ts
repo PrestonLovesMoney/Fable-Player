@@ -1,12 +1,12 @@
 import { app } from 'electron'
 import { resolve } from 'path'
 
-const PROTOCOL = 'spiceplayer'
+const PROTOCOL = 'fableplayer'
 
 let authCallbackHandler: ((url: string) => void) | null = null
 
 /**
- * Register the custom protocol `spiceplayer://` for OAuth callbacks.
+ * Register the custom protocol `fableplayer://` for OAuth callbacks.
  * Must be called before app.whenReady().
  */
 export function registerProtocol(): void {

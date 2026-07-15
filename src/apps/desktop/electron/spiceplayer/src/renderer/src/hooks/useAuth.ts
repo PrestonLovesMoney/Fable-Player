@@ -32,7 +32,7 @@ export function useAuth(): UseAuthReturn {
   useEffect(() => {
     const checkStatus = async (): Promise<void> => {
       try {
-        const status = await window.spiceAPI.auth.getStatus()
+        const status = await window.fableAPI.auth.getStatus()
         setState({
           isAuthenticated: status.isAuthenticated,
           user: status.user,
@@ -53,7 +53,7 @@ export function useAuth(): UseAuthReturn {
 
   // Listen for auth state changes from main process
   useEffect(() => {
-    const unsubscribe = window.spiceAPI.auth.onAuthStateChanged((status) => {
+    const unsubscribe = window.fableAPI.auth.onAuthStateChanged((status) => {
       setState({
         isAuthenticated: status.isAuthenticated,
         user: status.user as UserProfile | null,
@@ -68,7 +68,7 @@ export function useAuth(): UseAuthReturn {
   const login = useCallback(async () => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }))
     try {
-      const result = await window.spiceAPI.auth.login()
+      const result = await window.fableAPI.auth.login()
       if (!result.success) {
         setState((prev) => ({
           ...prev,
@@ -89,7 +89,7 @@ export function useAuth(): UseAuthReturn {
   const logout = useCallback(async () => {
     setState((prev) => ({ ...prev, isLoading: true }))
     try {
-      await window.spiceAPI.auth.logout()
+      await window.fableAPI.auth.logout()
       setState({
         isAuthenticated: false,
         user: null,

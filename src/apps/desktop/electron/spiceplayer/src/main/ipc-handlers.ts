@@ -5,11 +5,24 @@ import {
   getUserPlaylists,
   getLikedTracks,
   getUserTracks,
-  getRelatedTracks,
+  getPersonalizedRecommendations,
+  getNewReleases,
+  getTrendingTracks,
   searchTracks,
   getStreamUrl,
-  getPlaylist
+  getPlaylist,
+  createPlaylist,
+  updatePlaylistTracks,
+  type SCTrack
 } from './services/soundcloud-client'
+import {
+  clearDiscordPresence,
+  getDiscordPresenceStatus,
+  setDiscordClientId,
+  setDiscordPresenceEnabled,
+  updateDiscordPresence,
+  type DiscordPresencePayload
+} from './services/discord-rpc'
 
 /**
  * Register all IPC handlers for renderer ↔ main process communication.
@@ -118,9 +131,70 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(
     'sc:recommendations',
-    async (_event, track: Parameters<typeof getRelatedTracks>[0]) => {
+    async (
+      _event,
+      payload: SCTrack | { seeds: SCTrack[]; excludeIds?: number[]; limit?: number }
+    ) => {
       try {
-        return await getRelatedTracks(track)
+        // Legacy single-seed call still supported for older renderer builds.
+        if (payload && typeof payload === 'object' && 'seeds' in payload) {
+          return await getPersonalizedRecommendations(payload.seeds || [], {
+            excludeIds: payload.excludeIds,
+            limit: payload.limit
+          })
+        }
+        return await getPersonalizedRecommendations([payload as SCTrack])
+      } catch (error) {
+        return { error: error instanceof Error ? error.message : 'Unknown error' }
+      }
+    }
+  )
+
+  ipcMain.handle(
+    'sc:new-releases',
+    async (_event, { genres, limit }: { genres?: string[]; limit?: number } = {}) => {
+      try {
+        return await getNewReleases(genres || [], limit)
+      } catch (error) {
+        return { error: error instanceof Error ? error.message : 'Unknown error' }
+      }
+    }
+  )
+
+  ipcMain.handle(
+    'sc:trending',
+    async (_event, { genres, limit }: { genres?: string[]; limit?: number } = {}) => {
+      try {
+        return await getTrendingTracks(genres || [], limit)
+      } catch (error) {
+        return { error: error instanceof Error ? error.message : 'Unknown error' }
+      }
+    }
+  )
+
+  ipcMain.handle(
+    'sc:create-playlist',
+    async (
+      _event,
+      {
+        title,
+        trackIds,
+        sharing
+      }: { title: string; trackIds?: number[]; sharing?: 'public' | 'private' }
+    ) => {
+      try {
+        return await createPlaylist(title, trackIds || [], sharing || 'private')
+      } catch (error) {
+        return { error: error instanceof Error ? error.message : 'Unknown error' }
+      }
+    }
+  )
+
+  ipcMain.handle(
+    'sc:update-playlist-tracks',
+    async (_event, { playlistId, trackIds }: { playlistId: number; trackIds: number[] }) => {
+      try {
+        return await updatePlaylistTracks(playlistId, trackIds)
       } catch (error) {
         return { error: error instanceof Error ? error.message : 'Unknown error' }
       }
@@ -159,5 +233,29 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('window:is-maximized', () => {
     const win = BrowserWindow.getFocusedWindow()
     return win?.isMaximized() ?? false
+  })
+
+  // ── Discord Rich Presence ──
+
+  ipcMain.handle('discord:status', () => getDiscordPresenceStatus())
+
+  ipcMain.handle('discord:set-enabled', (_event, enabled: boolean) => {
+    setDiscordPresenceEnabled(Boolean(enabled))
+    return getDiscordPresenceStatus()
+  })
+
+  ipcMain.handle('discord:set-client-id', async (_event, clientId: string) => {
+    const result = await setDiscordClientId(String(clientId || ''))
+    return { ...result, ...getDiscordPresenceStatus() }
+  })
+
+  ipcMain.handle('discord:update', async (_event, payload: DiscordPresencePayload) => {
+    await updateDiscordPresence(payload)
+    return { success: true }
+  })
+
+  ipcMain.handle('discord:clear', async () => {
+    await clearDiscordPresence()
+    return { success: true }
   })
 }

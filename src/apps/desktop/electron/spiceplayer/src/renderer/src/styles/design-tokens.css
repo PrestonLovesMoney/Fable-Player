@@ -1,40 +1,41 @@
 /* ============================================
-   SpicePlayer Design Tokens
-   Minimalist Dark — Spotify-Inspired
+   Fable Player Design Tokens
+   Warm Beige — WavePlayer-Inspired
    ============================================ */
 
 :root {
   /* ── Background Colors ── */
-  --color-bg-primary: #0a0a0a;
-  --color-bg-secondary: #141414;
-  --color-bg-elevated: #1a1a1a;
-  --color-bg-surface: #242424;
-  --color-bg-hover: #1e1e1e;
+  --color-bg-primary: #F5F0EB;
+  --color-bg-secondary: #EDE8E3;
+  --color-bg-elevated: #FFFFFF;
+  --color-bg-surface: #E8E2DC;
+  --color-bg-hover: rgba(139, 115, 85, 0.08);
+  --color-bg-card: #FFFFFF;
 
-  /* ── Accent (Spotify-Inspired Green) ── */
-  --color-accent: #1DB954;
-  --color-accent-hover: #1ed760;
-  --color-accent-active: #18a34a;
-  --color-accent-glow: rgba(29, 185, 84, 0.15);
+  /* ── Accent (Warm Brown) ── */
+  --color-accent: #8B7355;
+  --color-accent-hover: #7A6449;
+  --color-accent-active: #6B563E;
+  --color-accent-glow: rgba(139, 115, 85, 0.15);
 
   /* ── Text Colors ── */
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #b3b3b3;
-  --color-text-muted: #6a6a6a;
-  --color-text-inverse: #0a0a0a;
+  --color-text-primary: #2D2A26;
+  --color-text-secondary: #6B6560;
+  --color-text-muted: #A09890;
+  --color-text-inverse: #FFFFFF;
 
   /* ── Status Colors ── */
-  --color-success: #1DB954;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
+  --color-success: #6B8E5A;
+  --color-warning: #C49B4A;
+  --color-error: #C45B4A;
 
   /* ── Border Colors ── */
-  --color-border: rgba(255, 255, 255, 0.06);
-  --color-border-hover: rgba(255, 255, 255, 0.12);
-  --color-border-accent: rgba(29, 185, 84, 0.3);
+  --color-border: rgba(139, 115, 85, 0.12);
+  --color-border-hover: rgba(139, 115, 85, 0.22);
+  --color-border-accent: rgba(139, 115, 85, 0.3);
 
   /* ── Typography ── */
-  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
@@ -78,11 +79,11 @@
   --radius-xl: 16px;
   --radius-full: 9999px;
 
-  /* ── Shadows ── */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.5);
+  /* ── Shadows (warm tint) ── */
+  --shadow-sm: 0 1px 3px rgba(139, 115, 85, 0.08);
+  --shadow-md: 0 4px 12px rgba(139, 115, 85, 0.10);
+  --shadow-lg: 0 8px 24px rgba(139, 115, 85, 0.12);
+  --shadow-xl: 0 16px 48px rgba(139, 115, 85, 0.15);
 
   /* ── Transitions ── */
   --transition-fast: 120ms ease;
@@ -99,8 +100,48 @@
   --z-toast: 50;
 
   /* ── Layout ── */
-  --sidebar-width: 240px;
+  --sidebar-width: 220px;
   --sidebar-collapsed: 64px;
   --titlebar-height: 40px;
-  --player-height: 72px;
+  --player-height: 80px;
+  --queue-width: 280px;
 }
+
+/* ── Dark Theme Overrides ── */
+html.dark-theme,
+body.dark-theme,
+.dark-theme {
+  /* ── Background Colors ── */
+  --color-bg-primary: #171513; /* Very dark warm charcoal */
+  --color-bg-secondary: #211E1A; /* Slightly lighter warm charcoal */
+  --color-bg-elevated: #2B2824; /* Card & sidebar background */
+  --color-bg-surface: #38342F; /* Elevated surfaces */
+  --color-bg-hover: rgba(222, 196, 166, 0.08);
+  --color-bg-card: #2B2824;
+
+  /* Accent colors are controlled by Settings customization (JS),
+     not hard-coded here — otherwise body.dark-theme overrides user picks. */
+
+  /* ── Text Colors ── */
+  --color-text-primary: #F5EFEB; /* Off-white text */
+  --color-text-secondary: #C0B7B1; /* Muted warm text */
+  --color-text-muted: #8E847E; /* Deeper muted text */
+  --color-text-inverse: #171513; /* Black text for light accents */
+
+  /* ── Status Colors ── */
+  --color-success: #8EAE7E;
+  --color-warning: #DAC493;
+  --color-error: #DA8E7E;
+
+  /* ── Border Colors ── */
+  --color-border: rgba(222, 196, 166, 0.12);
+  --color-border-hover: rgba(222, 196, 166, 0.22);
+  --color-border-accent: rgba(222, 196, 166, 0.3);
+
+  /* ── Shadows (deeper for dark mode) ── */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+}
+

@@ -1,8 +1,8 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
-// SpicePlayer API exposed to renderer
-const spiceAPI = {
+// Fable Player API exposed to renderer
+const fableAPI = {
   // ── Auth ──
   auth: {
     login: () => ipcRenderer.invoke('auth:login'),
@@ -35,8 +35,39 @@ const spiceAPI = {
       ipcRenderer.invoke('sc:my-tracks', params || {}),
     search: (query: string, limit?: number) => ipcRenderer.invoke('sc:search', { query, limit }),
     getStreamUrl: (trackId: number) => ipcRenderer.invoke('sc:stream-url', trackId),
-    getRecommendations: (track: unknown) => ipcRenderer.invoke('sc:recommendations', track),
-    getPlaylist: (playlistId: number) => ipcRenderer.invoke('sc:playlist', playlistId)
+    getRecommendations: (
+      seedsOrTrack: unknown,
+      options?: { excludeIds?: number[]; limit?: number }
+    ) => {
+      if (
+        seedsOrTrack &&
+        typeof seedsOrTrack === 'object' &&
+        !Array.isArray(seedsOrTrack) &&
+        'seeds' in (seedsOrTrack as object)
+      ) {
+        return ipcRenderer.invoke('sc:recommendations', seedsOrTrack)
+      }
+      if (Array.isArray(seedsOrTrack)) {
+        return ipcRenderer.invoke('sc:recommendations', {
+          seeds: seedsOrTrack,
+          excludeIds: options?.excludeIds,
+          limit: options?.limit
+        })
+      }
+      return ipcRenderer.invoke('sc:recommendations', seedsOrTrack)
+    },
+    getNewReleases: (params?: { genres?: string[]; limit?: number }) =>
+      ipcRenderer.invoke('sc:new-releases', params || {}),
+    getTrending: (params?: { genres?: string[]; limit?: number }) =>
+      ipcRenderer.invoke('sc:trending', params || {}),
+    getPlaylist: (playlistId: number) => ipcRenderer.invoke('sc:playlist', playlistId),
+    createPlaylist: (params: {
+      title: string
+      trackIds?: number[]
+      sharing?: 'public' | 'private'
+    }) => ipcRenderer.invoke('sc:create-playlist', params),
+    updatePlaylistTracks: (playlistId: number, trackIds: number[]) =>
+      ipcRenderer.invoke('sc:update-playlist-tracks', { playlistId, trackIds })
   },
 
   // ── Window Controls ──
@@ -55,6 +86,23 @@ const spiceAPI = {
         ipcRenderer.removeListener('window:maximized-changed', handler)
       }
     }
+  },
+
+  // ── Discord Rich Presence ──
+  discord: {
+    getStatus: () => ipcRenderer.invoke('discord:status'),
+    setEnabled: (enabled: boolean) => ipcRenderer.invoke('discord:set-enabled', enabled),
+    setClientId: (clientId: string) => ipcRenderer.invoke('discord:set-client-id', clientId),
+    updatePresence: (payload: {
+      title: string
+      artist: string
+      artworkUrl?: string | null
+      durationMs?: number
+      positionMs?: number
+      isPlaying: boolean
+      permalinkUrl?: string | null
+    }) => ipcRenderer.invoke('discord:update', payload),
+    clearPresence: () => ipcRenderer.invoke('discord:clear')
   }
 }
 
@@ -62,7 +110,7 @@ const spiceAPI = {
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('spiceAPI', spiceAPI)
+    contextBridge.exposeInMainWorld('fableAPI', fableAPI)
   } catch (error) {
     console.error(error)
   }
@@ -70,5 +118,5 @@ if (process.contextIsolated) {
   // @ts-ignore (define in dts)
   window.electron = electronAPI
   // @ts-ignore (define in dts)
-  window.spiceAPI = spiceAPI
+  window.fableAPI = fableAPI
 }

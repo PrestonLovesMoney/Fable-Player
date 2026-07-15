@@ -15,14 +15,22 @@ export default function LoginPage({
     <div className="login-container animate-fade-in">
       <div className="login-card animate-scale-in">
         <div className="login-header">
-          <svg className="login-logo" width="48" height="48" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-              fill="#FFFFFF"
-            />
+          <svg className="login-logo" width="64" height="64" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="fgrad-login" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="var(--color-accent, #3D004E)"/>
+                <stop offset="55%" stopColor="var(--color-accent-hover, #F83A75)"/>
+                <stop offset="100%" stopColor="var(--color-accent-active, #FD6860)"/>
+              </linearGradient>
+            </defs>
+            <g fill="url(#fgrad-login)">
+              <rect x="176" y="140" width="72" height="240" rx="16"/>
+              <rect x="176" y="140" width="160" height="64" rx="16"/>
+              <rect x="176" y="228" width="120" height="64" rx="16"/>
+            </g>
           </svg>
-          <h1>SpicePlayer</h1>
-          <p className="login-subtitle">minimalist unified music player</p>
+          <h1>Fable Player</h1>
+          <p className="login-subtitle">your music story begins here</p>
         </div>
 
         <div className="login-body">

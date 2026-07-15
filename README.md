@@ -25,21 +25,31 @@ FablePlayer is an open-source music player designed to unify your music experien
 ### Prerequisites
 
 - **Node.js** (v18 or higher recommended)
-- **SoundCloud Client ID & Secret**: To use SoundCloud authorization, you need to configure your SoundCloud credentials. You can set them in your environment variables or in `.env` inside the desktop app directory.
+- **SoundCloud Client ID & Secret**: Configure credentials in environment variables or in `.env` inside the desktop Electron app folder under `src/apps/desktop/electron/`.
 
 ### Quick Start
 
 1. Clone or navigate to the project directory.
+
 2. Go to the desktop app folder:
-   ```bash
-   cd src/apps/desktop/electron/fableplayer
+
+```bash
+cd src/apps/desktop/electron/fableplayer
+
+If that path is missing, run:
+
+.\scripts\rename-app-folder.ps1
+
+from the repo root, then retry.
+
+Enter your SoundCloud credentials in .env and register:
+fableplayer://callback
+
+as the redirect URI in the SoundCloud app settings.
 
 Install dependencies:
-
 npm install
-
 Run the application:
-
 npm run dev
 Repository Structure
 FablePlayer/
@@ -47,7 +57,8 @@ FablePlayer/
 │   ├── apps/
 │   │   └── desktop/
 │   │       └── electron/
-│   │           ├── src/
-│   │           │   ├── main/
-│   │           │   ├── preload/
-│   │           │   └── renderer/
+│   │           └── fableplayer/
+│   │               ├── src/main/      # Main process (OS, protocol, OAuth)
+│   │               ├── src/preload/   # Secure bridge
+│   │               └── src/renderer/  # React UI
+├── serverbackend/                     # Optional backend (OAuth proxy & API)

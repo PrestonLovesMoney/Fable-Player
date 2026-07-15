@@ -1,5 +1,5 @@
-appId: com.electron.app
-productName: spiceplayer
+appId: com.fableplayer.app
+productName: Fable Player
 directories:
   buildResources: build
 files:
@@ -12,7 +12,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: spiceplayer
+  executableName: fableplayer
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

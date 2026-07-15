@@ -9,12 +9,13 @@
 
 .login-card {
   width: 100%;
-  max-width: 340px;
-  background-color: var(--color-bg-secondary);
+  max-width: 380px;
+  background-color: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
-  padding: var(--space-10) var(--space-8);
-  border-radius: var(--radius-lg);
+  padding: var(--space-12) var(--space-8);
+  border-radius: var(--radius-xl);
   text-align: center;
+  box-shadow: var(--shadow-lg);
 }
 
 .login-header {
@@ -26,15 +27,16 @@
 
 .login-logo {
   margin-bottom: var(--space-4);
-  opacity: 0.9;
+  color: var(--color-accent);
 }
 
 .login-header h1 {
   font-family: var(--font-display);
-  font-size: var(--text-xl);
-  font-weight: var(--weight-bold);
+  font-size: var(--text-2xl);
+  font-weight: 800;
   color: var(--color-text-primary);
-  margin-bottom: var(--space-1);
+  margin-bottom: var(--space-2);
+  letter-spacing: var(--tracking-tight);
 }
 
 .login-subtitle {
@@ -46,20 +48,22 @@
 
 .login-btn {
   width: 100%;
-  padding: 12px var(--space-5);
+  padding: 14px var(--space-5);
   background-color: var(--color-accent);
   border: none;
   color: var(--color-text-inverse);
   border-radius: var(--radius-full);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: var(--weight-bold);
   transition: all var(--transition-normal);
   letter-spacing: 0.01em;
+  box-shadow: 0 4px 12px rgba(139, 115, 85, 0.25);
 }
 
 .login-btn:hover:not(:disabled) {
   background-color: var(--color-accent-hover);
   transform: scale(1.02);
+  box-shadow: 0 6px 20px rgba(139, 115, 85, 0.3);
 }
 
 .login-btn:active:not(:disabled) {
@@ -72,11 +76,15 @@
   cursor: not-allowed;
 }
 
+.btn-loading {
+  pointer-events: none;
+}
+
 .spinner {
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: var(--color-text-inverse);
   border-radius: var(--radius-full);
   animation: spin 0.7s linear infinite;
@@ -85,10 +93,10 @@
 .login-error {
   font-size: var(--text-xs);
   color: var(--color-error);
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.15);
+  background: rgba(196, 91, 74, 0.08);
+  border: 1px solid rgba(196, 91, 74, 0.15);
   padding: var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   margin-top: var(--space-4);
   text-align: center;
 }

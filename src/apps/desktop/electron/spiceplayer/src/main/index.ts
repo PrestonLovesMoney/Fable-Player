@@ -5,12 +5,13 @@ import icon from '../../resources/icon.png?asset'
 import { registerProtocol, handleProtocolUrl } from './protocol'
 import { registerIpcHandlers } from './ipc-handlers'
 import { getAuthStatus, broadcastAuthState } from './services/auth-service'
+import { destroyDiscordPresence, initDiscordPresence } from './services/discord-rpc'
 
 // Register custom protocol before app is ready
 registerProtocol()
 protocol.registerSchemesAsPrivileged([
   {
-    scheme: 'spiceplayer-media',
+    scheme: 'fableplayer-media',
     privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true }
   }
 ])
@@ -28,7 +29,7 @@ function createWindow(): void {
     titleBarStyle: 'hidden',
     autoHideMenuBar: true,
     backgroundColor: '#0A0A0A',
-    ...(process.platform === 'linux' ? { icon } : {}),
+    icon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -72,7 +73,7 @@ if (!gotTheLock) {
 } else {
   app.on('second-instance', (_event, commandLine) => {
     // Windows: the protocol URL is in the command line args
-    const url = commandLine.find((arg) => arg.startsWith('spiceplayer://'))
+    const url = commandLine.find((arg) => arg.startsWith('fableplayer://'))
     if (url) {
       handleProtocolUrl(url)
     }
@@ -86,11 +87,14 @@ if (!gotTheLock) {
 
   app.whenReady().then(async () => {
     // Set app user model id for Windows
-    electronApp.setAppUserModelId('com.spiceplayer')
+    electronApp.setAppUserModelId('com.fableplayer.app')
+    if (process.platform === 'win32') {
+      app.setAppUserModelId('com.fableplayer.app')
+    }
 
     // SoundCloud's CDN can reject direct renderer image requests. Fetch the
     // image in the trusted main process and expose only SoundCloud CDN assets.
-    protocol.handle('spiceplayer-media', async (request) => {
+    protocol.handle('fableplayer-media', async (request) => {
       const source = new URL(request.url).searchParams.get('url')
       if (!source) return new Response('Missing image URL', { status: 400 })
 
@@ -110,10 +114,11 @@ if (!gotTheLock) {
 
     // Register IPC handlers
     registerIpcHandlers()
+    initDiscordPresence()
 
     // On Windows a callback can launch this first instance directly, before the
     // `second-instance` event is available.
-    const initialProtocolUrl = process.argv.find((arg) => arg.startsWith('spiceplayer://'))
+    const initialProtocolUrl = process.argv.find((arg) => arg.startsWith('fableplayer://'))
     if (initialProtocolUrl) handleProtocolUrl(initialProtocolUrl)
 
     // Create the main window
@@ -138,6 +143,7 @@ if (!gotTheLock) {
   })
 
   app.on('window-all-closed', () => {
+    destroyDiscordPresence()
     if (process.platform !== 'darwin') {
       app.quit()
     }
