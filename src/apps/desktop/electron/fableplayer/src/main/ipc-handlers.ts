@@ -45,7 +45,7 @@ export function registerIpcHandlers(): void {
   })
 
   ipcMain.handle('auth:logout', async () => {
-    logout()
+    await logout()
     const status = { isAuthenticated: false, user: null }
     broadcastAuthState(status)
     return { success: true }
