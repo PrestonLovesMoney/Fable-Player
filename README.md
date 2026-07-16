@@ -1,64 +1,48 @@
 # FablePlayer 🎵
 
-FablePlayer is an open-source music player designed to unify your music experience. It connects to platforms like SoundCloud (and Spotify in the future) to let you listen to all your music in one gorgeous, ad-free app.
-
-## Features (v1 MVP)
-
-- **SoundCloud Integration**: Secure user authentication using SoundCloud's latest OAuth 2.1 protocol with PKCE.
-- **Unified Interface**: Premium dark-cream interface featuring smooth layouts, glassmorphism, responsive sidebar navigation, and subtle micro-animations.
-- **Frameless Window**: Custom drag-and-drop title bar and OS window controls.
-- **SoundCloud API Client**: Fetch user profile, playlist lists, liked tracks, and search SoundCloud catalog.
+FablePlayer is an elegant, open-source desktop music player designed to unify your music libraries. It connects directly to platforms like SoundCloud, allowing you to listen to all your music in one ad-free app with a premium, responsive interface.
 
 ---
 
-## Technology Stack
+## Repository Structure
 
-- **Core Framework**: Electron (Desktop platform)
-- **Frontend library**: React (Vite-powered renderer)
-- **Programming Language**: TypeScript
-- **Styling**: Vanilla CSS with unified Design Tokens variables
+- **`/src/apps/desktop/electron/fableplayer`**: The desktop client application (Electron, Vite, React, TypeScript).
+- **`/serverbackend`** (External/separate folder): The authentication & API proxy backend server.
 
 ---
 
-## Setup & Installation
+## Features
 
-### Prerequisites
+- **SoundCloud Integration**: OAuth 2.1 authentication with PKCE via backend proxy.
+- **Unified Interface**: Modern dark-cream design with smooth layouts, glassmorphism, and micro-animations.
+- **Discord Presence**: Rich Presence support showing your currently playing tracks.
+- **Custom Frameless Window**: Custom draggable titlebar with custom OS window controls.
 
-- **Node.js** (v18 or higher recommended)
-- **SoundCloud Client ID & Secret**: Configure credentials in environment variables or in `.env` inside the desktop Electron app folder under `src/apps/desktop/electron/`.
+---
 
-### Quick Start
+## Getting Started
 
-1. Clone or navigate to the project directory.
+### 1. Run the Backend Server
+Make sure your backend server is configured (e.g. `.env` with SoundCloud Client ID/Secret) and running on `http://16.16.74.196:3000`.
 
-2. Go to the desktop app folder:
-
+### 2. Run the Desktop App
+Navigate to the desktop app folder:
 ```bash
 cd src/apps/desktop/electron/fableplayer
-
-If that path is missing, run:
-
-.\scripts\rename-app-folder.ps1
-
-from the repo root, then retry.
-
-Enter your SoundCloud credentials in .env and register:
-fableplayer://callback
-
-as the redirect URI in the SoundCloud app settings.
+```
 
 Install dependencies:
+```bash
 npm install
-Run the application:
+```
+
+Start the application in development mode:
+```bash
 npm run dev
-Repository Structure
-FablePlayer/
-├── src/
-│   ├── apps/
-│   │   └── desktop/
-│   │       └── electron/
-│   │           └── fableplayer/
-│   │               ├── src/main/      # Main process (OS, protocol, OAuth)
-│   │               ├── src/preload/   # Secure bridge
-│   │               └── src/renderer/  # React UI
-├── serverbackend/                     # Optional backend (OAuth proxy & API)
+```
+
+Build the production installer (Windows):
+```bash
+npm run build:win
+```
+The output installer will be generated in the `./dist` folder as `fableplayer-<version>-setup.exe`.
