@@ -8,6 +8,7 @@ import { clearTokens, getAccessToken, saveTokens } from './token-store'
 // This is intentionally not a secret. SoundCloud credentials live only on the
 // backend; deployments may override the address without rebuilding the app.
 const SERVER_URL = (process.env.FABLE_SERVER_URL || 'http://16.16.74.196:3000').replace(/\/$/, '')
+const NETWORK_RETRY_DELAYS_MS = [500, 1500]
 
 export interface UserProfile {
   id: number
@@ -87,7 +88,7 @@ async function serverFetch<T>(path: string, options: RequestInit = {}): Promise<
     // Electron's network stack respects the user's Windows proxy and network
     // settings, unlike Node's fetch. This is important for OAuth to work on
     // school, office, and VPN networks.
-    response = await net.fetch(`${SERVER_URL}${path}`, {
+    response = await fetchWithNetworkRetry(`${SERVER_URL}${path}`, {
       ...options,
       headers: { Accept: 'application/json', ...options.headers }
     })
@@ -102,6 +103,23 @@ async function serverFetch<T>(path: string, options: RequestInit = {}): Promise<
   }
 
   return response.json() as Promise<T>
+}
+
+async function fetchWithNetworkRetry(url: string, options: RequestInit): Promise<Response> {
+  let lastError: unknown
+
+  for (let attempt = 0; attempt <= NETWORK_RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      return await net.fetch(url, options)
+    } catch (error) {
+      lastError = error
+      const delay = NETWORK_RETRY_DELAYS_MS[attempt]
+      if (delay === undefined) break
+      await new Promise<void>((resolve) => setTimeout(resolve, delay))
+    }
+  }
+
+  throw lastError
 }
 
 /** Starts OAuth through the backend, which owns the SoundCloud credentials. */

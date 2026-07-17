@@ -2,6 +2,7 @@ import { getValidAccessToken } from './auth-service'
 import { net } from 'electron'
 
 const SERVER_URL = (process.env.FABLE_SERVER_URL || 'http://16.16.74.196:3000').replace(/\/$/, '')
+const NETWORK_RETRY_DELAYS_MS = [500, 1500]
 
 export interface SCTrack {
   id: number
@@ -51,7 +52,7 @@ async function serverFetch<T>(path: string, options: RequestInit = {}): Promise<
   try {
     // Use Chromium's network stack so requests inherit the user's proxy and
     // network configuration instead of failing with a generic fetch error.
-    response = await net.fetch(`${SERVER_URL}${path}`, {
+    response = await fetchWithNetworkRetry(`${SERVER_URL}${path}`, {
       ...options,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -69,6 +70,23 @@ async function serverFetch<T>(path: string, options: RequestInit = {}): Promise<
   }
 
   return response.json() as Promise<T>
+}
+
+async function fetchWithNetworkRetry(url: string, options: RequestInit): Promise<Response> {
+  let lastError: unknown
+
+  for (let attempt = 0; attempt <= NETWORK_RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      return await net.fetch(url, options)
+    } catch (error) {
+      lastError = error
+      const delay = NETWORK_RETRY_DELAYS_MS[attempt]
+      if (delay === undefined) break
+      await new Promise<void>((resolve) => setTimeout(resolve, delay))
+    }
+  }
+
+  throw lastError
 }
 
 export async function getMe(): Promise<SCUser> {
