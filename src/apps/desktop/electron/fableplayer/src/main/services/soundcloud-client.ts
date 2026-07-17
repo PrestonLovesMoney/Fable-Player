@@ -1,4 +1,5 @@
 import { getValidAccessToken } from './auth-service'
+import { net } from 'electron'
 
 const SERVER_URL = (process.env.FABLE_SERVER_URL || 'http://16.16.74.196:3000').replace(/\/$/, '')
 
@@ -46,14 +47,22 @@ async function serverFetch<T>(path: string, options: RequestInit = {}): Promise<
   const token = await getValidAccessToken()
   if (!token) throw new Error('Not authenticated. Please login first.')
 
-  const response = await fetch(`${SERVER_URL}${path}`, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/json',
-      ...options.headers
-    }
-  })
+  let response: Response
+  try {
+    // Use Chromium's network stack so requests inherit the user's proxy and
+    // network configuration instead of failing with a generic fetch error.
+    response = await net.fetch(`${SERVER_URL}${path}`, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+        ...options.headers
+      }
+    })
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : 'Unknown network error'
+    throw new Error(`Cannot reach the Fable Player server. Check your internet connection or proxy settings. (${reason})`)
+  }
 
   if (!response.ok) {
     throw new Error(`Server API error (${response.status}): ${await response.text()}`)

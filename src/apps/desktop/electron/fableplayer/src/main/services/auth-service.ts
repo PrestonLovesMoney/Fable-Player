@@ -1,4 +1,4 @@
-import { BrowserWindow, shell } from 'electron'
+import { BrowserWindow, net, shell } from 'electron'
 import { execFile } from 'child_process'
 import { existsSync } from 'fs'
 import { join } from 'path'
@@ -82,10 +82,19 @@ function parseExpiresIn(value: string | number | undefined): number {
 }
 
 async function serverFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${SERVER_URL}${path}`, {
-    ...options,
-    headers: { Accept: 'application/json', ...options.headers }
-  })
+  let response: Response
+  try {
+    // Electron's network stack respects the user's Windows proxy and network
+    // settings, unlike Node's fetch. This is important for OAuth to work on
+    // school, office, and VPN networks.
+    response = await net.fetch(`${SERVER_URL}${path}`, {
+      ...options,
+      headers: { Accept: 'application/json', ...options.headers }
+    })
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : 'Unknown network error'
+    throw new Error(`Cannot reach the Fable Player server. Check your internet connection or proxy settings. (${reason})`)
+  }
 
   if (!response.ok) {
     const body = await response.text()
