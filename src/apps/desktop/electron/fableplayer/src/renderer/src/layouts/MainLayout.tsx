@@ -195,6 +195,10 @@ export default function MainLayout({ user, onLogout }: MainLayoutProps): React.J
   // ── Refs ──
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const hlsRef = useRef<Hls | null>(null)
+  const playbackRequestRef = useRef(0)
+  const queueBeforeShuffleRef = useRef<SCTrack[] | null>(null)
+  const repeatModeRef = useRef<RepeatMode>('off')
+  const playNextTrackRef = useRef<() => void>(() => undefined)
   const recScrollRef = useRef<HTMLDivElement>(null)
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -614,21 +618,31 @@ export default function MainLayout({ user, onLogout }: MainLayoutProps): React.J
   // be ignored — HLS.js surfaces real errors via Hls.Events.ERROR instead.
   const hlsActiveRef = useRef(false)
 
+  useEffect(() => {
+    repeatModeRef.current = repeatMode
+  }, [repeatMode])
+
   const startPlayback = useCallback(
     async (track: SCTrack): Promise<void> => {
+      // A stream URL request can finish after the user has selected another
+      // track. Only the most recent request is allowed to change playback.
+      const requestId = ++playbackRequestRef.current
       setPlaybackError(null)
+
+      // Stop the previous session before resolving the next stream. This also
+      // prevents a previous HLS instance from continuing in the background.
+      audioRef.current?.pause()
+      audioRef.current = null
+      if (hlsRef.current) {
+        hlsRef.current.destroy()
+        hlsRef.current = null
+      }
       hlsActiveRef.current = false
       try {
         const result = await window.fableAPI.soundcloud.getStreamUrl(track.id)
+        if (requestId !== playbackRequestRef.current) return
         if (!result.url) throw new Error(result.error || 'Track unavailable.')
         const streamUrl = result.url
-
-        // Pause current audio & destroy active Hls session
-        audioRef.current?.pause()
-        if (hlsRef.current) {
-          hlsRef.current.destroy()
-          hlsRef.current = null
-        }
 
         const audio = new Audio()
         audio.volume = isMuted ? 0 : volume
@@ -641,12 +655,13 @@ export default function MainLayout({ user, onLogout }: MainLayoutProps): React.J
           }
         })
         audio.addEventListener('ended', () => {
-          if (repeatMode === 'one') {
+          if (audioRef.current !== audio || requestId !== playbackRequestRef.current) return
+          if (repeatModeRef.current === 'one') {
             audio.currentTime = 0
             void audio.play()
             return
           }
-          playNextTrack()
+          playNextTrackRef.current()
         })
         audio.addEventListener('error', (e) => {
           // When HLS.js is active it triggers native audio errors during
@@ -691,6 +706,7 @@ export default function MainLayout({ user, onLogout }: MainLayoutProps): React.J
           hlsActiveRef.current = true
 
           hls.on(Hls.Events.MANIFEST_PARSED, async () => {
+            if (audioRef.current !== audio || requestId !== playbackRequestRef.current) return
             try {
               await audio.play()
               setIsPlaying(true)
@@ -702,6 +718,7 @@ export default function MainLayout({ user, onLogout }: MainLayoutProps): React.J
           })
 
           hls.on(Hls.Events.ERROR, (_event, data) => {
+            if (audioRef.current !== audio || requestId !== playbackRequestRef.current) return
             if (data.fatal) {
               console.error('HLS fatal error:', data.type, data.details)
               if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
@@ -736,6 +753,7 @@ export default function MainLayout({ user, onLogout }: MainLayoutProps): React.J
           : [track, ...likedTracks.slice(0, 10)]
         void loadRecommendations(seedPool)
       } catch (error) {
+        if (requestId !== playbackRequestRef.current) return
         showError(error instanceof Error ? error.message : 'Could not start playback.')
         setIsPlaying(false)
       }
@@ -759,6 +777,7 @@ export default function MainLayout({ user, onLogout }: MainLayoutProps): React.J
 
       if (trackList) {
         if (shuffleOn) {
+          queueBeforeShuffleRef.current = [...trackList]
           const shuffled = shuffleArray([...trackList])
           const clickedIdx = shuffled.findIndex((t) => t.id === track.id)
           if (clickedIdx > 0) {
@@ -767,6 +786,7 @@ export default function MainLayout({ user, onLogout }: MainLayoutProps): React.J
           setQueue(shuffled)
           setQueueIndex(0)
         } else {
+          queueBeforeShuffleRef.current = null
           setQueue(trackList)
           setQueueIndex(index ?? trackList.findIndex((t) => t.id === track.id))
         }
@@ -809,6 +829,10 @@ export default function MainLayout({ user, onLogout }: MainLayoutProps): React.J
     setQueueIndex(nextIdx)
     void startPlayback(queue[nextIdx])
   }, [queue, queueIndex, repeatMode, startPlayback])
+
+  useEffect(() => {
+    playNextTrackRef.current = playNextTrack
+  }, [playNextTrack])
 
   const playPrevTrack = useCallback((): void => {
     if (audioRef.current && audioRef.current.currentTime > 3) {
@@ -882,16 +906,29 @@ export default function MainLayout({ user, onLogout }: MainLayoutProps): React.J
 
   // ── Shuffle ──
   const toggleShuffle = (): void => {
-    setShuffleOn((prev) => {
-      if (!prev && queue.length > 0) {
-        const current = queue[queueIndex]
-        const remaining = queue.filter((_, i) => i !== queueIndex)
-        const shuffled = [current, ...shuffleArray(remaining)]
-        setQueue(shuffled)
-        setQueueIndex(0)
+    if (!shuffleOn && queue.length > 0) {
+      queueBeforeShuffleRef.current = [...queue]
+      const current = queue[queueIndex]
+      const remaining = queue.filter((_, i) => i !== queueIndex)
+      const shuffled = current ? [current, ...shuffleArray(remaining)] : shuffleArray([...queue])
+      setQueue(shuffled)
+      setQueueIndex(current ? 0 : -1)
+      setShuffleOn(true)
+      return
+    }
+
+    if (shuffleOn) {
+      const originalQueue = queueBeforeShuffleRef.current
+      if (originalQueue) {
+        const currentIndex = currentTrack
+          ? originalQueue.findIndex((track) => track.id === currentTrack.id)
+          : -1
+        setQueue(originalQueue)
+        setQueueIndex(currentIndex)
       }
-      return !prev
-    })
+      queueBeforeShuffleRef.current = null
+      setShuffleOn(false)
+    }
   }
 
   const cycleRepeat = (): void => {
@@ -948,6 +985,7 @@ export default function MainLayout({ user, onLogout }: MainLayoutProps): React.J
   const clearQueue = (): void => {
     setQueue([])
     setQueueIndex(-1)
+    queueBeforeShuffleRef.current = null
   }
 
   // ── Queue stats ──
@@ -1851,6 +1889,22 @@ export default function MainLayout({ user, onLogout }: MainLayoutProps): React.J
                       {customization.reduceMotion ? 'On' : 'Off'}
                     </button>
                   </div>
+                </div>
+
+                <div className="settings-card settings-support-card">
+                  <h3 className="settings-card-title">Support Fable Player</h3>
+                  <p className="settings-card-desc">
+                    Enjoying the player? Your support helps keep new features and fixes coming.
+                  </p>
+                  <button
+                    className="settings-support-btn"
+                    onClick={() => void window.fableAPI.window.openExternal('https://ko-fi.com/skibidisigmatrollface')}
+                  >
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M12 21.35 10.55 20C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09A6.01 6.01 0 0 1 16.5 3C19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.51L12 21.35Z" />
+                    </svg>
+                    Support me on Ko-fi
+                  </button>
                 </div>
               </div>
             </section>

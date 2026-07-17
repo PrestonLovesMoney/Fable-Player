@@ -203,8 +203,10 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('shell:open-external', async (_event, url: string) => {
     const parsed = new URL(url)
-    if (parsed.protocol !== 'https:' || !parsed.hostname.endsWith('soundcloud.com')) {
-      throw new Error('Only SoundCloud profile links can be opened.')
+    const isSoundCloud = parsed.hostname === 'soundcloud.com' || parsed.hostname.endsWith('.soundcloud.com')
+    const isKofi = parsed.hostname === 'ko-fi.com' || parsed.hostname.endsWith('.ko-fi.com')
+    if (parsed.protocol !== 'https:' || (!isSoundCloud && !isKofi)) {
+      throw new Error('This external link is not allowed.')
     }
     await shell.openExternal(parsed.toString())
   })
