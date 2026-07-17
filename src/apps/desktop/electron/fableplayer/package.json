@@ -1,6 +1,6 @@
 {
   "name": "fableplayer",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Fable Player — your music story begins here",
   "main": "./out/main/index.js",
   "author": "example.com",

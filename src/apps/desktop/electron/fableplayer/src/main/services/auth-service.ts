@@ -7,7 +7,7 @@ import { clearTokens, getAccessToken, saveTokens } from './token-store'
 
 // This is intentionally not a secret. SoundCloud credentials live only on the
 // backend; deployments may override the address without rebuilding the app.
-const SERVER_URL = (process.env.FABLE_SERVER_URL || 'http://16.16.74.196:3000').replace(/\/$/, '')
+const SERVER_URL = (process.env.FABLE_SERVER_URL || 'http://34.245.20.65:3000').replace(/\/$/, '')
 const NETWORK_RETRY_DELAYS_MS = [500, 1500]
 
 export interface UserProfile {

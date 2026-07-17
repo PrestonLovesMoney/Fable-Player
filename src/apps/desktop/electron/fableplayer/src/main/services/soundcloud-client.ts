@@ -1,7 +1,7 @@
 import { getValidAccessToken } from './auth-service'
 import { net } from 'electron'
 
-const SERVER_URL = (process.env.FABLE_SERVER_URL || 'http://16.16.74.196:3000').replace(/\/$/, '')
+const SERVER_URL = (process.env.FABLE_SERVER_URL || 'http://34.245.20.65:3000').replace(/\/$/, '')
 const NETWORK_RETRY_DELAYS_MS = [500, 1500]
 
 export interface SCTrack {
