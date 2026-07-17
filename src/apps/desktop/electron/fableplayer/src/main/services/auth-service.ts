@@ -1,4 +1,7 @@
 import { BrowserWindow, shell } from 'electron'
+import { execFile } from 'child_process'
+import { existsSync } from 'fs'
+import { join } from 'path'
 import { getRedirectUri, setAuthCallbackHandler } from '../protocol'
 import { clearTokens, getAccessToken, saveTokens } from './token-store'
 
@@ -29,6 +32,44 @@ interface CallbackResponse {
   token: string
   expiresIn?: string | number
   error?: string
+}
+
+/**
+ * Opens the SoundCloud OAuth page in Chrome on Windows. Some Windows
+ * installations do not hand a shell.openExternal() request to Chrome even
+ * when it is the preferred browser, so use its known install locations first.
+ * If Chrome is unavailable, the operating-system default browser is used.
+ */
+async function openOAuthBrowser(url: string): Promise<void> {
+  const oauthUrl = new URL(url)
+  const isSoundCloud = oauthUrl.hostname === 'soundcloud.com' || oauthUrl.hostname.endsWith('.soundcloud.com')
+  if (oauthUrl.protocol !== 'https:' || !isSoundCloud) {
+    throw new Error('The server returned an unsafe OAuth URL.')
+  }
+
+  if (process.platform === 'win32') {
+    const chromePaths = [
+      process.env.PROGRAMFILES && join(process.env.PROGRAMFILES, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+      process.env['PROGRAMFILES(X86)'] && join(process.env['PROGRAMFILES(X86)'], 'Google', 'Chrome', 'Application', 'chrome.exe'),
+      process.env.LOCALAPPDATA && join(process.env.LOCALAPPDATA, 'Google', 'Chrome', 'Application', 'chrome.exe')
+    ].filter((path): path is string => Boolean(path && existsSync(path)))
+
+    const chromePath = chromePaths[0]
+    if (chromePath) {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const chrome = execFile(chromePath, ['--new-window', oauthUrl.toString()], { windowsHide: true })
+          chrome.once('spawn', resolve)
+          chrome.once('error', reject)
+        })
+        return
+      } catch {
+        // Fall through to the system browser if Chrome could not be started.
+      }
+    }
+  }
+
+  await shell.openExternal(oauthUrl.toString())
 }
 
 function parseExpiresIn(value: string | number | undefined): number {
@@ -87,7 +128,7 @@ export async function startAuthFlow(): Promise<boolean> {
     broadcastAuthState(status)
   })
 
-  await shell.openExternal(login.url)
+  await openOAuthBrowser(login.url)
   return true
 }
 
